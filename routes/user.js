@@ -92,7 +92,7 @@ router.post("/api/campaigns", protect, async (req, res) => {
 });
 
 // Get all campaigns
-router.get("/api/campaigns", protect, async (req, res) => {
+router.get("/api/campaigns", async (req, res) => {
   try {
     const campaigns = await Campaign.find({}).populate("user", "name");
     res.status(200).send(campaigns);
