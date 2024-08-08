@@ -15,16 +15,19 @@ const campaignSchema = new mongoose.Schema(
     campaignCode: {
       type: String,
       required: true,
-      unique: true,
     },
     landingPages: {
       type: Number,
       required: true,
     },
-    preparedBy: {
+    campaignCreatedBy: {
       type: String,
       enum: ["Atul Tingre", "Nandkishor Kadam", "Avinash Mahajan"],
       required: true,
+    },
+    campaignAssignedTo: {
+      type: String,
+      enum: ["Atul Tingre", "Nandkishor Kadam", "Avinash Mahajan"],
     },
     status: {
       type: String,

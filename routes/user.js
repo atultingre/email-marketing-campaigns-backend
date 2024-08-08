@@ -5,9 +5,9 @@ const Campaign = require("../models/Campaign");
 const bcrypt = require("bcryptjs");
 
 const router = express.Router();
-const jwt_sceret = "atultingre.work@gmail.com";
+const jwt_secret = "atultingre.work@gmail.com";
 const generateToken = (id) => {
-  return jwt.sign({ id }, jwt_sceret, {
+  return jwt.sign({ id }, jwt_secret, {
     expiresIn: "30d",
   });
 };
@@ -67,7 +67,7 @@ const protect = async (req, res, next) => {
   ) {
     try {
       token = req.headers.authorization.split(" ")[1];
-      const decoded = jwt.verify(token, jwt_sceret);
+      const decoded = jwt.verify(token, jwt_secret);
       req.user = await User.findById(decoded.id).select("-password");
       next();
     } catch (err) {
@@ -83,7 +83,11 @@ const protect = async (req, res, next) => {
 // Create a new campaign
 router.post("/api/campaigns", protect, async (req, res) => {
   try {
-    const campaign = new Campaign({ ...req.body, user: req.user._id });
+    const campaign = new Campaign({
+      ...req.body,
+      campaignCreatedBy: req.user.name,
+      user: req.user._id,
+    });
     await campaign.save();
     res.status(201).send(campaign);
   } catch (err) {
@@ -102,18 +106,13 @@ router.get("/api/campaigns", async (req, res) => {
   }
 });
 
+// Update a campaign
 router.put("/api/campaigns/:id", protect, async (req, res) => {
   try {
     const campaign = await Campaign.findById(req.params.id);
 
     if (!campaign) {
       return res.status(404).json({ message: "Campaign not found" });
-    }
-
-    if (campaign.user.toString() !== req.user._id.toString()) {
-      return res
-        .status(401)
-        .json({ message: "User not authorized to update this campaign" });
     }
 
     // Update campaign details
@@ -132,7 +131,6 @@ router.put("/api/campaigns/:id", protect, async (req, res) => {
 // Delete a campaign
 router.delete("/api/campaigns/:id", protect, async (req, res) => {
   try {
-    // Check if campaign exists
     const campaign = await Campaign.findById(req.params.id);
 
     if (!campaign) {
@@ -140,25 +138,13 @@ router.delete("/api/campaigns/:id", protect, async (req, res) => {
       return res.status(404).json({ message: "Campaign not found" });
     }
 
-    // Check if user is authorized
-    if (campaign.user.toString() !== req.user._id.toString()) {
-      console.log("User not authorized:", req.user._id);
-      return res
-        .status(401)
-        .json({ message: "User not authorized to delete this campaign" });
-    }
-
     // Delete the campaign
     await Campaign.findByIdAndDelete(req.params.id);
 
-    res
-      .status(200)
-      .json({ message: "Campaign deleted successfully", campaign });
+    res.status(200).json({ message: "Campaign deleted successfully", campaign });
   } catch (err) {
     console.error("Error details:", err.message, err.stack);
-    res
-      .status(500)
-      .json({ message: "Failed to delete campaign", error: err.message });
+    res.status(500).json({ message: "Failed to delete campaign", error: err.message });
   }
 });
 
